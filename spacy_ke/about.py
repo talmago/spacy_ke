@@ -1,0 +1,7 @@
+__title__ = "spacy_ke"
+__version__ = "0.1.0"
+__summary__ = "Keyword extraction with spaCy"
+__author__ = "Tal Almagor"
+__email__ = "almagoric@gmail.com"
+__license__ = "GPL"
+__url__ = "https://github.com/talmago/spacy_ke"

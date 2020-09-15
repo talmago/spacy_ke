@@ -1,48 +1,16 @@
 import re
 import numpy as np
-import editdistance
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, Iterator, Tuple, Any, List
-
-from spacy import displacy
-from spacy.language import Language
-from spacy.pipeline.pipes import component
+from typing import Dict, Tuple, Any, List
 from spacy.tokens.doc import Doc
-from spacy.tokens.span import Span
+
+from spacy_ke.base import KeywordExtractor, Candidate
 
 
 @dataclass
-class Candidate:
-    lexical_form: List[str]
-    """ the lexical form of the candidate. """
-
-    surface_forms: List[Span]
-    """ the surface forms of the candidate. """
-
-    offsets: List[List[int]]
-    """ the offsets of the surface forms. """
-
-    sentence_ids: List[int]
-    """ the sentence id of each surface form. """
-
-    def similarity(self, other):
-        """Measure a similarity to another candidate.
-
-        ``SIM = 1 - edit_distance(lexical_form1, lexical_form2) / max(#lexical_form1, #lexical_form2)``.
-        """
-        assert isinstance(other, Candidate)
-
-        lf1 = " ".join(self.lexical_form)
-        lf2 = " ".join(other.lexical_form)
-        dist = editdistance.eval(lf1, lf2)
-        dist /= max(len(lf1), len(lf2))
-        return 1.0 - dist
-
-
-@dataclass
-class Features:
+class YakeFeatures:
     """ term frequency """
 
     tf: float
@@ -100,121 +68,21 @@ class Features:
         return (D * B) / (A + (C / D) + (E / D))
 
 
-@component(
-    "yake",
-    requires=["token.pos", "token.dep", "doc.sents"],
-    assigns=["doc._.kw", "doc._.kw_vocab", "doc._.kw_candidates"],
-)
-class Yake:
-    cfg: Dict[str, Any] = {
-        "window": 2,
-        "ngram": 3,
-        "lemmatize": False,
-        "min_distance": 0.5,
-    }
+class Yake(KeywordExtractor):
+    cfg: Dict[str, Any] = {"window": 2, "ngram": 3, "lemmatize": False}
 
-    def __init__(self, nlp: Language, **overrides):
-        self.nlp = nlp
-        self.cfg.update(overrides)
-        self.first_run = True
-
-    def __call__(self, doc: Doc) -> Doc:
-        self.init_component()
-        return doc
-
-    def init_component(self):
-        if not Doc.has_extension("kw"):
-            Doc.set_extension("kw", method=self.kw)
-        if not Doc.has_extension("kw_vocab"):
-            Doc.set_extension("kw_vocab", getter=self.kw_vocab)
-        if not Doc.has_extension("kw_candidates"):
-            Doc.set_extension("kw_candidates", getter=self.kw_candidates)
-
-    def render(self, doc: Doc, jupyter=None, **kw_kwargs):
-        """Render HTML for text highlighting of keywords.
+    def weight_candidates(self, doc: Doc) -> List[Tuple[Candidate, Any]]:
+        """Compute the weighted score of each keyword candidate.
 
         Args:
             doc (Doc): doc.
-            jupyter (bool): optional, override jupyter auto-detection.
-            kw_kwargs (kwargs): optional, keyword arguments for ``kw``.
 
         Returns:
-            Rendered HTML markup
-        """
-        spans = self(doc)._.kw(**kw_kwargs)
-        examples = [
-            {
-                "text": doc.text,
-                "title": None,
-                "ents": sorted([
-                    {
-                        "start": span.start_char,
-                        "end": span.end_char,
-                        "label": f"{round(score, 3)}"
-                    } for (span, score) in spans
-                ], key=lambda x: x["start"])
-            }
-        ]
-        html = displacy.render(examples, style="ent", manual=True, jupyter=jupyter)
-        return html
-
-    def kw(self, doc: Doc, n=10, similarity_thresh=0.45):
-        """Returns the n-best candidates given the weights.
-
-        Args:
-            doc (Doc): doc.
-            n (int): the number of candidates, defaults to 10.
-            similarity_thresh (float): optional, similarity thresh for dedup. default is 0.45.
-
-        Returns:
-            List
+            list of tuples, candidate with a score.
         """
         res = []
-        candidates_weighted = doc._.kw_candidates
-        candidates_weighted.sort(key=lambda x: x[1])
-        for candidate, candidate_w in candidates_weighted:
-            if similarity_thresh > 0.0:
-                redundant = False
-                for prev_candidate, _ in res:
-                    if candidate.similarity(prev_candidate) > similarity_thresh:
-                        redundant = True
-                        break
-                if redundant:
-                    continue
-            res.append((candidate, candidate_w))
-            if len(res) >= n:
-                break
-        res = res[: min(n, len(res))]
-        res = [(c.surface_forms[0], score) for c, score in res]
-        return res
-
-    def kw_candidates(self, doc: Doc):
-        """Compute the weighted score of each candidate.
-
-        Args:
-            doc (Doc): doc.
-
-        Returns:
-            dict, mapping of each candidate lemma to
-        """
-        res = []
-        vocab = doc._.kw_vocab
-        candidates = dict()
-
-        for sentence_id, offset, ngram_span in self._ngrams(doc, n=self.cfg["ngram"]):
-            if not self._is_candidate(ngram_span):
-                continue
-            idx = ngram_span.lemma_
-            try:
-                c = candidates[idx]
-            except (KeyError, IndexError):
-                lexical_form = [token.lemma_.lower() for token in ngram_span]
-                c = candidates[idx] = Candidate(lexical_form, [], [], [])
-            c.surface_forms.append(ngram_span)
-            c.offsets.append(offset)
-            c.sentence_ids.append(sentence_id)
-
-        for idx, candidate in candidates.items():
+        vocab = self._build_vocab_features(doc)
+        for candidate in doc._.kw_candidates:
             if self.cfg["lemmatize"]:
                 n_offsets = len(candidate.offsets)
                 weights = [vocab[w].weight for w in candidate.lexical_form]
@@ -260,7 +128,7 @@ class Yake:
                     res.append((candidate, candidate_w))
         return res
 
-    def kw_vocab(self, doc: Doc) -> Dict[str, Features]:
+    def _build_vocab_features(self, doc: Doc) -> Dict[str, YakeFeatures]:
         """Compute the weight of individual words using yake features (see ``Features`` class).
 
         Args:
@@ -325,7 +193,7 @@ class Yake:
 
             # 5. DIFFERENT
             different = len(sentence_ids) / n_sentences
-            features[word] = Features(
+            features[word] = YakeFeatures(
                 tf, casing, position, frequency, relatedness, different, contexts[word]
             )
 
@@ -344,18 +212,14 @@ class Yake:
             dict.
         """
         words = defaultdict(set)
-        sentences = list(doc.sents)
-
-        for i, sentence in enumerate(sentences):
-            shift = sum([len(s) for s in sentences[0:i]])
-            for word in sentence:
-                if word.is_alpha and not re.search("(?i)^-[lr][rcs]b-$", word.text):
+        for sent_i, sent in enumerate(doc.sents):
+            for token in sent:
+                if token.is_alpha and not re.search("(?i)^-[lr][rcs]b-$", token.text):
                     if lemmatize:
-                        word_idx = word.lemma_.lower()
+                        word = token.lemma_.lower()
                     else:
-                        word_idx = word.lower_
-                    words[word_idx].add((shift + word.i, shift, i, word.text))
-
+                        word = token.lower_
+                    words[word].add((sent.start + token.i, sent.start, sent_i, token.text))
         return words
 
     @staticmethod
@@ -374,10 +238,10 @@ class Yake:
             dict.
         """
         contexts = defaultdict(lambda: ([], []))
-        for i, sentence in enumerate(doc.sents):
-            words = [w.lower_ for w in sentence]
+        for sent_i, sent in enumerate(doc.sents):
             block = []
-            for j, word in enumerate(words):
+            for token in sent:
+                word = token.lower_
                 if word not in vocab:
                     block = []
                     continue
@@ -392,56 +256,18 @@ class Yake:
                 block.append(word)
         return contexts
 
-    @staticmethod
-    def _ngrams(doc: Doc, n=3) -> Iterator[Tuple[int, int, Span]]:
-        """Select all the n-grams and populate the candidate container.
 
-        Args:
-            doc (Doc): doc.
-            n (int): the n-gram length, defaults to 3.
+if __name__ == "__main__":
+    import spacy
 
-        Returns:
-            Iterator(sentence_id<int>, offset<int>, ngram<Span>)
-        """
-        sentences = list(doc.sents)
-        for sentence_id, sentence in enumerate(sentences):
-            sentence_length = len(sentence)
-            skip = min(n, sentence_length)
-            shift = sum([len(s) for s in sentences[0:sentence_id]])
-            for j in range(sentence_length):
-                for k in range(j + 1, min(j + 1 + skip, sentence_length + 1)):
-                    tokens = sentence[j:k]
-                    offset = shift + j
-                    yield sentence_id, offset, tokens
+    nlp = spacy.load("en_core_web_sm")
+    nlp.add_pipe(Yake(nlp))
 
-    @staticmethod
-    def _is_candidate(span: Span, min_length=3, min_word_length=2, alpha=True) -> bool:
-        """Check if N-gram span is qualified as a candidate.
+    doc = nlp(
+        "Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence "
+        "concerned with the interactions between computers and human language, in particular how to program computers "
+        "to process and analyze large amounts of natural language data. "
+    )
 
-        Args:
-            span (Span): n-gram.
-            min_length (int): minimum length for n-gram.
-            min_word_length (int): minimum length for word in an ngram.
-            alpha (bool): Filter n-grams with non-alphanumeric words.
-
-        Returns:
-            bool
-        """
-        n_span = len(span)
-        # discard if composed of 1-2 characters
-        if len(span.text) < min_length:
-            return False
-        for token_idx, token in enumerate(span):
-            # discard if contains punct
-            if token.is_punct:
-                return False
-            # discard if contains tokens of 1-2 characters
-            if len(token.text) < min_word_length:
-                return False
-            # discard if contains non alphanumeric
-            if alpha and not token.is_alpha:
-                return False
-            # discard if first/last word is a stop
-            if token_idx in (0, n_span - 1) and token.is_stop:
-                return False
-        return True
+    for keyword, score in doc._.extract_keywords(n=10):
+        print(keyword, "-", score)

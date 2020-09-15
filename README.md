@@ -1,11 +1,11 @@
-# spacy_yake: Yake! Keyword Extraction for spaCy.
+# spacy_ke: Keyword Extraction with spaCy.
 
 Inspired by [pke](https://github.com/boudinfl/pke).
 
 ## ⏳ Installation
 
 ```bash
-pip install spacy_yake
+pip install spacy_ke
 ```
 
 ## 🚀 Quickstart
@@ -15,10 +15,10 @@ pip install spacy_yake
 ```python
 import spacy
 
-from spacy_yake import Yake
+from spacy_ke import Yake
 
 nlp = spacy.load("en_core_web_sm")
-nlp.add_pipe(Yake(nlp))
+nlp.add_pipe(Yake(nlp, ngram=3, window=2, lemmatize=False))
 
 doc = nlp(
     "Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence "
@@ -26,10 +26,9 @@ doc = nlp(
     "to process and analyze large amounts of natural language data. "
 )
 
-for keyword, score in doc._.kw(n=3):
+for keyword, score in doc._.extract_keywords(n=3):
     print(keyword, "-", score)
 
-# Output:
 # computer science - 0.020279855002262884
 # NLP - 0.035016746977200745
 # Natural language processing - 0.04407186487965091
