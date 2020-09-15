@@ -6,6 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, Iterator, Tuple, Any, List
 
+from spacy import displacy
 from spacy.language import Language
 from spacy.pipeline.pipes import component
 from spacy.tokens.doc import Doc
@@ -118,16 +119,44 @@ class Yake:
         self.first_run = True
 
     def __call__(self, doc: Doc) -> Doc:
-        if self.first_run:
-            self.init_component()
-            self.first_run = False
-
+        self.init_component()
         return doc
 
     def init_component(self):
-        Doc.set_extension("kw", method=self.kw)
-        Doc.set_extension("kw_vocab", getter=self.kw_vocab)
-        Doc.set_extension("kw_candidates", getter=self.kw_candidates)
+        if not Doc.has_extension("kw"):
+            Doc.set_extension("kw", method=self.kw)
+        if not Doc.has_extension("kw_vocab"):
+            Doc.set_extension("kw_vocab", getter=self.kw_vocab)
+        if not Doc.has_extension("kw_candidates"):
+            Doc.set_extension("kw_candidates", getter=self.kw_candidates)
+
+    def render(self, doc: Doc, jupyter=None, **kw_kwargs):
+        """Render HTML for text highlighting of keywords.
+
+        Args:
+            doc (Doc): doc.
+            jupyter (bool): optional, override jupyter auto-detection.
+            kw_kwargs (kwargs): optional, keyword arguments for ``kw``.
+
+        Returns:
+            Rendered HTML markup
+        """
+        spans = self(doc)._.kw(**kw_kwargs)
+        examples = [
+            {
+                "text": doc.text,
+                "title": None,
+                "ents": sorted([
+                    {
+                        "start": span.start_char,
+                        "end": span.end_char,
+                        "label": f"{round(score, 3)}"
+                    } for (span, score) in spans
+                ], key=lambda x: x["start"])
+            }
+        ]
+        html = displacy.render(examples, style="ent", manual=True, jupyter=jupyter)
+        return html
 
     def kw(self, doc: Doc, n=10, similarity_thresh=0.45):
         """Returns the n-best candidates given the weights.

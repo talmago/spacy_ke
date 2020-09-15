@@ -10,6 +10,7 @@ ipython = "*"
 twine = "*"
 pytest = "*"
 en = {file = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz"}
+jupyter = "*"
 
 [packages]
 spacy = "<2.3.0"
