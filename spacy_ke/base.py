@@ -1,13 +1,14 @@
 import editdistance
 
 from dataclasses import dataclass
-from typing import Dict, Iterator, Tuple, Any, List, Iterable
+from typing import Dict, Iterator, Tuple, Any, List, Iterable, Set
 
 from spacy import displacy
 from spacy.language import Language
 from spacy.pipeline.pipes import component
 from spacy.tokens.doc import Doc
 from spacy.tokens.span import Span
+from spacy.util import filter_spans
 
 
 @dataclass
@@ -18,11 +19,12 @@ class Candidate:
     surface_forms: List[Span]
     """ the surface forms of the candidate. """
 
-    offsets: List[List[int]]
-    """ the offsets of the surface forms. """
-
     sentence_ids: List[int]
     """ the sentence id of each surface form. """
+
+    @property
+    def offsets(self):
+        return [sf.start for sf in self.surface_forms]
 
     def similarity(self, other):
         """Measure a similarity to another candidate.
@@ -44,7 +46,7 @@ class Candidate:
     assigns=["doc._.extract"],
 )
 class KeywordExtractor:
-    cfg: Dict[str, Any] = {"ngram": 3}
+    cfg: Dict[str, Any] = {}
 
     def __init__(self, nlp: Language, **overrides):
         self.nlp = nlp
@@ -58,7 +60,7 @@ class KeywordExtractor:
         if not Doc.has_extension("extract_keywords"):
             Doc.set_extension("extract_keywords", method=self.extract_keywords)
         if not Doc.has_extension("kw_candidates"):
-            Doc.set_extension("kw_candidates", getter=self.get_candidates)
+            Doc.set_extension("kw_candidates", getter=self.candidate_selection)
 
     def render(self, doc: Doc, jupyter=None, **kw_kwargs):
         """Render HTML for text highlighting of keywords.
@@ -71,7 +73,8 @@ class KeywordExtractor:
         Returns:
             Rendered HTML markup
         """
-        spans = self(doc)._.extract_keywords(**kw_kwargs)
+        doc = self(doc)
+        spans = doc._.extract_keywords(**kw_kwargs)
         examples = [
             {
                 "text": doc.text,
@@ -104,8 +107,7 @@ class KeywordExtractor:
             List
         """
         spans = []
-        candidates_weighted = self.weight_candidates(doc)
-        candidates_weighted.sort(key=lambda x: x[1])
+        candidates_weighted = self.candidate_weighting(doc)
         for candidate, candidate_w in candidates_weighted:
             if similarity_thresh > 0.0:
                 redundant = False
@@ -122,7 +124,7 @@ class KeywordExtractor:
         spans = [(c.surface_forms[0], score) for c, score in spans]
         return spans
 
-    def weight_candidates(self, doc: Doc) -> List[Tuple[Candidate, Any]]:
+    def candidate_weighting(self, doc: Doc) -> List[Tuple[Candidate, Any]]:
         """Compute the weighted score of each keyword candidate.
 
         Args:
@@ -133,7 +135,7 @@ class KeywordExtractor:
         """
         return [(c, 1.0) for c in doc._.kw_candidates]
 
-    def get_candidates(self, doc: Doc) -> Iterable[Candidate]:
+    def candidate_selection(self, doc: Doc) -> Iterable[Candidate]:
         """Get keywords candidates.
 
         Args:
@@ -142,18 +144,74 @@ class KeywordExtractor:
         Returns:
             Iterable[Candidate]
         """
+        return self._ngram_selection(doc)
+
+    def _chunk_selection(self, doc: Doc) -> Iterable[Candidate]:
+        """Get keywords candidates from noun chunks and entities.
+
+        Args:
+            doc (Doc): doc.
+
+        Returns:
+            Iterable[Candidate]
+        """
+        surface_forms = []
+        spans = list(doc.ents)
+        ent_words: Set[str] = set()
+        sentence_indices = []
+        for span in spans:
+            ent_words.update(token.i for token in span)
+        for np in doc.noun_chunks:
+            # https://github.com/explosion/sense2vec/blob/c22078c4e6c13038ab1c7718849ff97aa54fb9d8/sense2vec/util.py#L105
+            while len(np) > 1 and np[0].dep_ not in ("advmod", "amod", "compound"):
+                np = np[1:]
+            if not any(w.i in ent_words for w in np):
+                spans.append(np)
+        for sent in doc.sents:
+            sentence_indices.append((sent.start, sent.end))
+        for span in filter_spans(spans):
+            for i, token_indices in enumerate(sentence_indices):
+                if span.start >= token_indices[0] and span.end <= token_indices[1]:
+                    surface_forms.append((i, span))
+                    break
+        return self._merge_surface_forms(surface_forms)
+
+    def _ngram_selection(self, doc: Doc, n=3) -> Iterable[Candidate]:
+        """Get keywords candidates from ngrams.
+
+        Args:
+            doc (Doc): doc.
+            n (int): ngram range.
+
+        Returns:
+            Iterable[Candidate]
+        """
+        surface_forms = [sf for sf in self._ngrams(doc, n=n) if self._is_candidate(sf[1])]
+
+        return self._merge_surface_forms(surface_forms)
+
+    @staticmethod
+    def _merge_surface_forms(
+        surface_forms: Iterator[Tuple[int, Span]]
+    ) -> Iterable[Candidate]:
+        """De-dup candidate surface forms.
+
+        Args:
+            surface_forms (Iterable): tuples of <sent_i, span>.
+
+        Returns:
+            List of candidates.
+        """
         candidates = dict()
-        for sentence_id, ngram_span in self._ngrams(doc, n=self.cfg["ngram"]):
-            if not self._is_candidate(ngram_span):
-                continue
-            idx = ngram_span.lemma_
+        for sent_i, span in surface_forms:
+            idx = span.lemma_.lower()
             try:
                 c = candidates[idx]
             except (KeyError, IndexError):
-                lexical_form = [token.lemma_.lower() for token in ngram_span]
-                c = candidates[idx] = Candidate(lexical_form, [], [], [])
-            c.surface_forms.append(ngram_span)
-            c.sentence_ids.append(sentence_id)
+                lexical_form = [token.lemma_.lower() for token in span]
+                c = candidates[idx] = Candidate(lexical_form, [], [])
+            c.surface_forms.append(span)
+            c.sentence_ids.append(sent_i)
         return candidates.values()
 
     @staticmethod

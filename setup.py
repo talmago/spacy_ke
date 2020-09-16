@@ -14,7 +14,7 @@ from setuptools import find_packages, setup, Command
 root = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(root)
 
-with io.open(os.path.join(root, "spacy_yake", "about.py"), encoding="utf8") as f:
+with io.open(os.path.join(root, "spacy_ke", "about.py"), encoding="utf8") as f:
     about = {}
     exec(f.read(), about)
 
@@ -70,7 +70,7 @@ setup(
     author_email=about["__email__"],
     url=about["__url__"],
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
-    install_requires=["spacy", "numpy", "editdistance"],
+    install_requires=["editdistance", "numpy", "networkx", "spacy<2.3.0", "scipy"],
     python_requires='>=3.7',
     include_package_data=True,
     license=about["__license__"],

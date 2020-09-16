@@ -3,7 +3,7 @@ import numpy as np
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, Tuple, Any, List
+from typing import Dict, Tuple, Any, List, Iterable
 from spacy.tokens.doc import Doc
 
 from spacy_ke.base import KeywordExtractor, Candidate
@@ -69,9 +69,39 @@ class YakeFeatures:
 
 
 class Yake(KeywordExtractor):
+    """spaCy implementation of "YAKE! Collection-Independent Automatic Keyword Extractor".
+
+    Usage example:
+    --------------
+
+    >>> import spacy
+
+    >>> nlp = spacy.load("en_core_web_sm")
+    >>> nlp.add_pipe(Yake(nlp))
+
+    >>> doc = nlp(
+        "Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence "
+        "concerned with the interactions between computers and human language, in particular how to program computers "
+        "to process and analyze large amounts of natural language data. "
+    )
+
+    >>> doc._.extract_keywords(n=5)
+    """
+
     cfg: Dict[str, Any] = {"window": 2, "ngram": 3, "lemmatize": False}
 
-    def weight_candidates(self, doc: Doc) -> List[Tuple[Candidate, Any]]:
+    def candidate_selection(self, doc: Doc) -> Iterable[Candidate]:
+        """Get keywords candidates.
+
+        Args:
+            doc (Doc): doc.
+
+        Returns:
+            Iterable[Candidate]
+        """
+        return self._ngram_selection(doc, n=self.cfg["ngram"])
+
+    def candidate_weighting(self, doc: Doc) -> List[Tuple[Candidate, Any]]:
         """Compute the weighted score of each keyword candidate.
 
         Args:
@@ -103,14 +133,14 @@ class Yake(KeywordExtractor):
                             if j - 1 >= 0:
                                 left = sf[j - 1]
                                 prob_t1 = (
-                                        vocab[left.lower_].ctx[1].count(term_stop)
-                                        / vocab[left.lower_].tf
+                                    vocab[left.lower_].ctx[1].count(term_stop)
+                                    / vocab[left.lower_].tf
                                 )
                             if j + 1 < len(sf):
                                 right = sf[j + 1]
                                 prob_t2 = (
-                                        vocab[term_stop].ctx[0].count(right.text)
-                                        / vocab[right.lower_].tf
+                                    vocab[term_stop].ctx[0].count(right.text)
+                                    / vocab[right.lower_].tf
                                 )
                             prob = prob_t1 * prob_t2
                             prod_ *= 1 + (1 - prob)
@@ -126,6 +156,7 @@ class Yake(KeywordExtractor):
                     candidate_w = prod_
                     candidate_w /= tf * (1 + sum_)
                     res.append((candidate, candidate_w))
+        res.sort(key=lambda x: x[1])
         return res
 
     def _build_vocab_features(self, doc: Doc) -> Dict[str, YakeFeatures]:
@@ -247,27 +278,11 @@ class Yake(KeywordExtractor):
                     continue
                 # add the left context
                 contexts[word][0].extend(
-                    [w for w in block[max(0, len(block) - window): len(block)]]
+                    [w for w in block[max(0, len(block) - window) : len(block)]]
                 )
                 # add the right context
-                for w in block[max(0, len(block) - window): len(block)]:
+                for w in block[max(0, len(block) - window) : len(block)]:
                     contexts[w][1].append(word)
                 # add word to the current block
                 block.append(word)
         return contexts
-
-
-if __name__ == "__main__":
-    import spacy
-
-    nlp = spacy.load("en_core_web_sm")
-    nlp.add_pipe(Yake(nlp))
-
-    doc = nlp(
-        "Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence "
-        "concerned with the interactions between computers and human language, in particular how to program computers "
-        "to process and analyze large amounts of natural language data. "
-    )
-
-    for keyword, score in doc._.extract_keywords(n=10):
-        print(keyword, "-", score)

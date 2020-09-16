@@ -13,9 +13,11 @@ en = {file = "https://github.com/explosion/spacy-models/releases/download/en_cor
 jupyter = "*"
 
 [packages]
-spacy = "<2.3.0"
-numpy = "*"
 editdistance = "*"
+networkx = "*"
+numpy = "*"
+scipy = "*"
+spacy = "<2.3.0"
 
 [requires]
 python_version = "3.7"
