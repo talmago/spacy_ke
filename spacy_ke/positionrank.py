@@ -31,7 +31,7 @@ class PositionRank(KeywordExtractor):
         "window": 10,
         "alpha": 0.85,
         "tol": 1.0e-5,
-        "normalize": False
+        "normalize": False,
     }
 
     def candidate_selection(self, doc: Doc) -> Iterable[Candidate]:
@@ -66,11 +66,13 @@ class PositionRank(KeywordExtractor):
             positions[word] /= norm
 
         # compute the word scores using biased random walk
-        W = nx.pagerank_scipy(G,
-                              alpha=self.cfg["alpha"],
-                              tol=self.cfg["tol"],
-                              personalization=positions,
-                              weight="weight")
+        W = nx.pagerank_scipy(
+            G,
+            alpha=self.cfg["alpha"],
+            tol=self.cfg["tol"],
+            personalization=positions,
+            weight="weight",
+        )
 
         for candidate in doc._.kw_candidates:
             candidate_w = sum([W.get(t, 0.0) for t in candidate.lexical_form])
@@ -112,7 +114,7 @@ class PositionRank(KeywordExtractor):
                         G.add_node(node1, position=(1 / position1 + 1))
                     if not G.has_edge(node0, node1):
                         G.add_edge(node0, node1, weight=0)
-                    G[node0][node1]['weight'] += 1
+                    G[node0][node1]["weight"] += 1
                 j = j + 1
 
         return G
