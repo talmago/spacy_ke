@@ -1,4 +1,5 @@
 import networkx as nx
+import numpy as np
 
 from typing import Dict, Tuple, Any, List, Iterable
 from spacy.tokens.doc import Doc
@@ -24,17 +25,13 @@ class TextRank(KeywordExtractor):
     )
 
     >>> doc._.extract_keywords(n=5)
-
-    >>> doc._.extract_keywords(n=5)
     """
 
     cfg: Dict[str, Any] = {
-        "pos": ["ADJ", "NOUN", "PROPN", "VERB"],
+        "pos": frozenset({"ADJ", "NOUN", "PROPN", "VERB"}),
         "window": 3,
-        "edge_weight": 1,
         "alpha": 0.85,
-        "tol": 1.0e-6,
-        "normalize": False,
+        "tol": 1.0e-6
     }
 
     def candidate_selection(self, doc: Doc) -> Iterable[Candidate]:
@@ -69,12 +66,10 @@ class TextRank(KeywordExtractor):
                     rank += W[t]
                 else:
                     non_lemma += 1
-            import numpy as np
-
             non_lemma_discount = chunk_len / (chunk_len + (2.0 * non_lemma) + 1.0)
             candidate_w = np.sqrt(rank / (chunk_len + non_lemma)) * non_lemma_discount
             candidate_w += (
-                candidate.offsets[0] * 1e-8
+                    candidate.offsets[0] * 1e-8
             )  # break ties according to position in text
             res.append((candidate, candidate_w))
         res.sort(key=lambda x: x[1], reverse=True)
@@ -92,7 +87,6 @@ class TextRank(KeywordExtractor):
         G = nx.Graph()
         pos = self.cfg["pos"]
         window_size = self.cfg["window"]
-        edge_weight = self.cfg["edge_weight"]
         seen = set()
         for sent in doc.sents:
             for token in sent:
@@ -101,12 +95,12 @@ class TextRank(KeywordExtractor):
                 node0 = token.lemma_.lower()
                 if not G.has_node(node0):
                     G.add_node(node0)
-                for prev_token in sent[max(sent.start, token.i - window_size) : token.i]:
+                for prev_token in sent[max(sent.start, token.i - window_size): token.i]:
                     node1 = prev_token.lemma_.lower()
                     if node0 != node1 and node1 in seen:
                         if G.has_edge(node0, node1):
-                            G[node0][node1]["weight"] += edge_weight
+                            G[node0][node1]["weight"] += 1
                         else:
-                            G.add_edge(node0, node1, weight=edge_weight)
+                            G.add_edge(node0, node1, weight=1)
                 seen.add(node0)
         return G
