@@ -1,6 +1,6 @@
 import networkx as nx
 
-from typing import Dict, Tuple, Any, List, Iterable
+from typing import Dict, Tuple, Any, List
 from spacy.tokens.doc import Doc
 
 from spacy_ke.base import KeywordExtractor, Candidate
@@ -26,24 +26,14 @@ class PositionRank(KeywordExtractor):
     >>> doc._.extract_keywords(n=5)
     """
 
-    cfg: Dict[str, Any] = {
+    defaults: Dict[str, Any] = {
         "pos": frozenset({"ADJ", "NOUN", "PROPN"}),
         "window": 10,
         "alpha": 0.85,
         "tol": 1.0e-5,
         "normalize": False,
+        "candidate_selection": "chunk",
     }
-
-    def candidate_selection(self, doc: Doc) -> Iterable[Candidate]:
-        """Get keywords candidates.
-
-        Args:
-            doc (Doc): doc.
-
-        Returns:
-            Iterable[Candidate]
-        """
-        return self._chunk_selection(doc)
 
     def candidate_weighting(self, doc: Doc) -> List[Tuple[Candidate, float]]:
         """Compute the weighted score of each keyword candidate.

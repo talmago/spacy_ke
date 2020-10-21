@@ -3,7 +3,7 @@ import numpy as np
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, Tuple, Any, List, Iterable
+from typing import Dict, Tuple, Any, List
 from spacy.tokens.doc import Doc
 
 from spacy_ke.base import KeywordExtractor, Candidate
@@ -88,18 +88,12 @@ class Yake(KeywordExtractor):
     >>> doc._.extract_keywords(n=5)
     """
 
-    cfg: Dict[str, Any] = {"window": 2, "ngram": 3, "lemmatize": False}
-
-    def candidate_selection(self, doc: Doc) -> Iterable[Candidate]:
-        """Get keywords candidates.
-
-        Args:
-            doc (Doc): doc.
-
-        Returns:
-            Iterable[Candidate]
-        """
-        return self._ngram_selection(doc, n=self.cfg["ngram"])
+    defaults: Dict[str, Any] = {
+        "window": 2,
+        "ngram": 3,
+        "lemmatize": False,
+        "candidate_selection": {"ngram": 3},
+    }
 
     def candidate_weighting(self, doc: Doc) -> List[Tuple[Candidate, Any]]:
         """Compute the weighted score of each keyword candidate.

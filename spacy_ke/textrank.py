@@ -1,7 +1,7 @@
 import networkx as nx
 import numpy as np
 
-from typing import Dict, Tuple, Any, List, Iterable
+from typing import Dict, Tuple, Any, List
 from spacy.tokens.doc import Doc
 
 from spacy_ke.base import KeywordExtractor, Candidate
@@ -27,23 +27,13 @@ class TextRank(KeywordExtractor):
     >>> doc._.extract_keywords(n=5)
     """
 
-    cfg: Dict[str, Any] = {
+    defaults: Dict[str, Any] = {
         "pos": frozenset({"ADJ", "NOUN", "PROPN", "VERB"}),
         "window": 3,
         "alpha": 0.85,
         "tol": 1.0e-6,
+        "candidate_selection": "chunk",
     }
-
-    def candidate_selection(self, doc: Doc) -> Iterable[Candidate]:
-        """Get keywords candidates.
-
-        Args:
-            doc (Doc): doc.
-
-        Returns:
-            Iterable[Candidate]
-        """
-        return self._chunk_selection(doc)
 
     def candidate_weighting(self, doc: Doc) -> List[Tuple[Candidate, float]]:
         """Compute the weighted score of each keyword candidate.
@@ -68,9 +58,7 @@ class TextRank(KeywordExtractor):
                     non_lemma += 1
             non_lemma_discount = chunk_len / (chunk_len + (2.0 * non_lemma) + 1.0)
             candidate_w = np.sqrt(rank / (chunk_len + non_lemma)) * non_lemma_discount
-            candidate_w += (
-                candidate.offsets[0] * 1e-8
-            )  # break ties according to position in text
+            candidate_w += candidate.offsets[0] * 1e-8  # break ties according to position in text
             res.append((candidate, candidate_w))
         res.sort(key=lambda x: x[1], reverse=True)
         return res

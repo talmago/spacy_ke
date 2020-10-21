@@ -16,7 +16,7 @@ import spacy
 from spacy_ke import Yake
 
 nlp = spacy.load("en_core_web_sm")
-nlp.add_pipe(Yake(nlp, ngram=3, window=2, lemmatize=False))
+nlp.add_pipe(Yake(nlp))
 
 doc = nlp(
     "Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence "
@@ -30,6 +30,20 @@ for keyword, score in doc._.extract_keywords(n=3):
 # computer science - 0.020279855002262884
 # NLP - 0.035016746977200745
 # Natural language processing - 0.04407186487965091
+```
+
+#### Customization
+
+In the example below, we customize the yake algorithm as follows; 
+  - Change the candidate selection to **chunk** (noun phrases). Notice that *candidate_selection* is a global 
+  config property for all keyword extractors, which can be set to either a **callable** (*Doc -> Iterator[Candidate]*), 
+  a **string** pointing to instance method (i.e *chunk* -> *._chunk_selection()*), or a **dict** (i.e *{"ngram": 3}*).
+  - Set ``lemmatize=True`` for candidate weighting. 
+  Notice that this config property is unique to the Yake implementation.
+
+```python
+
+nlp.add_pipe(Yake(nlp, candidate_selection="chunk", lemmatize=True))
 ```
 
 ## Development
@@ -49,7 +63,7 @@ $ pipenv run pytest
 Run black (code formatter)
 
 ```sh
-$ pipenv run black spacy_yake/ --config=pyproject.toml
+$ pipenv run black spacy_ke/ --config=pyproject.toml
 ```
 
 ## References

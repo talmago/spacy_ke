@@ -31,13 +31,14 @@ class TopicRank(KeywordExtractor):
     >>> doc._.extract_keywords(n=5)
     """
 
-    cfg: Dict[str, Any] = {
+    defaults: Dict[str, Any] = {
         "clustering_method": "average",
         "distance_metric": "jaccard",
         "threshold": 0.74,
         "alpha": 0.85,
         "tol": 1.0e-6,
         "heuristic": None,
+        "candidate_selection": "chunk",
     }
 
     def candidate_selection(self, doc: Doc) -> Iterable[Candidate]:
@@ -49,7 +50,7 @@ class TopicRank(KeywordExtractor):
         Returns:
             Iterable[Candidate]
         """
-        C = list(self._chunk_selection(doc))
+        C = super().candidate_selection(doc)
         C.sort(key=lambda x: x.lexical_form)
         return C
 
@@ -65,13 +66,10 @@ class TopicRank(KeywordExtractor):
         res = []
         C = doc._.kw_candidates
         G = self.build_graph(doc)
-        W = nx.pagerank_scipy(
-            G, alpha=self.cfg["alpha"], tol=self.cfg["tol"], weight="weight"
-        )
+        W = nx.pagerank_scipy(G, alpha=self.cfg["alpha"], tol=self.cfg["tol"], weight="weight")
 
         for i, topic in nx.get_node_attributes(G, "C").items():
             offsets = [C[t].offsets[0] for t in topic]
-
             if self.cfg["heuristic"] == "frequent":
                 freq = [len(C[t].surface_forms) for t in topic]
                 indexes = [j for j, f in enumerate(freq) if f == max(freq)]
@@ -122,11 +120,7 @@ class TopicRank(KeywordExtractor):
         return G
 
     def topic_clustering(
-        self,
-        doc: Doc,
-        clustering_method="average",
-        distance_metric="jaccard",
-        threshold=0.74,
+        self, doc: Doc, clustering_method="average", distance_metric="jaccard", threshold=0.74
     ) -> List[List[int]]:
         """Get a list of topics by clustering candidates' lexical forms.
 
@@ -150,9 +144,7 @@ class TopicRank(KeywordExtractor):
             Z = linkage(Y, method=clustering_method)
             clusters = fcluster(Z, t=threshold, criterion="distance")
             for cluster_id in range(1, max(clusters) + 1):
-                topics.append(
-                    [j for j in range(len(clusters)) if clusters[j] == cluster_id]
-                )
+                topics.append([j for j in range(len(clusters)) if clusters[j] == cluster_id])
         return topics
 
     @staticmethod

@@ -46,10 +46,11 @@ class Candidate:
     assigns=["doc._.extract"],
 )
 class KeywordExtractor:
-    cfg: Dict[str, Any] = {}
+    defaults: Dict[str, Any] = {"candidate_selection": {"ngram": 3}}
 
     def __init__(self, nlp: Language, **overrides):
         self.nlp = nlp
+        self.cfg = self.defaults.copy()
         self.cfg.update(overrides)
 
     def __call__(self, doc: Doc) -> Doc:
@@ -60,7 +61,9 @@ class KeywordExtractor:
         if not Doc.has_extension("extract_keywords"):
             Doc.set_extension("extract_keywords", method=self.extract_keywords)
         if not Doc.has_extension("kw_candidates"):
-            Doc.set_extension("kw_candidates", getter=self.candidate_selection)
+            Doc.set_extension(
+                "kw_candidates", setter=self.candidate_selection, getter=self.candidate_selection
+            )
 
     def render(self, doc: Doc, jupyter=None, **kw_kwargs):
         """Render HTML for text highlighting of keywords.
@@ -144,7 +147,23 @@ class KeywordExtractor:
         Returns:
             Iterable[Candidate]
         """
-        return self._ngram_selection(doc)
+        fargs = []
+        method = self.cfg["candidate_selection"]
+        if hasattr(method, "__call__"):
+            f = method
+        elif isinstance(method, str):
+            f = getattr(self, f"_{method}_selection")
+        elif isinstance(method, dict):
+            f = getattr(self, f"_{list(method.keys())[0]}_selection")
+            args = list(method.values())[0]
+            if args is not None:
+                if isinstance(args, list):  # sequence of arguments
+                    fargs.extend(args)
+                else:  # single argument
+                    fargs.append(args)
+        else:
+            raise ValueError(f"Invalid method set in config: {method}")
+        return f(doc, *fargs)
 
     def _chunk_selection(self, doc: Doc) -> Iterable[Candidate]:
         """Get keywords candidates from noun chunks and entities.
@@ -191,9 +210,7 @@ class KeywordExtractor:
         return self._merge_surface_forms(surface_forms)
 
     @staticmethod
-    def _merge_surface_forms(
-        surface_forms: Iterator[Tuple[int, Span]]
-    ) -> Iterable[Candidate]:
+    def _merge_surface_forms(surface_forms: Iterator[Tuple[int, Span]]) -> Iterable[Candidate]:
         """De-dup candidate surface forms.
 
         Args:
@@ -212,7 +229,7 @@ class KeywordExtractor:
                 c = candidates[idx] = Candidate(lexical_form, [], [])
             c.surface_forms.append(span)
             c.sentence_ids.append(sent_i)
-        return candidates.values()
+        return list(candidates.values())
 
     @staticmethod
     def _ngrams(doc: Doc, n=3) -> Iterator[Tuple[int, Span]]:
