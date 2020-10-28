@@ -42,11 +42,22 @@ class Candidate:
 
 @component(
     "keyword_extractor",
-    requires=["token.pos", "token.dep", "doc.sents"],
-    assigns=["doc._.extract"],
+    requires=[
+        "token.pos",
+        "token.dep",
+        "doc.sents"
+    ],
+    assigns=[
+        "doc._.extract_keywords",
+        "doc._.kw_candidates"
+    ],
 )
 class KeywordExtractor:
-    defaults: Dict[str, Any] = {"candidate_selection": {"ngram": 3}}
+    defaults: Dict[str, Any] = {
+        "candidate_selection": {
+            "ngram": 3
+        }
+    }
 
     def __init__(self, nlp: Language, **overrides):
         self.nlp = nlp
@@ -55,15 +66,14 @@ class KeywordExtractor:
 
     def __call__(self, doc: Doc) -> Doc:
         self.init_component()
+        doc._.kw_candidates = self.candidate_selection(doc)
         return doc
 
     def init_component(self):
         if not Doc.has_extension("extract_keywords"):
             Doc.set_extension("extract_keywords", method=self.extract_keywords)
         if not Doc.has_extension("kw_candidates"):
-            Doc.set_extension(
-                "kw_candidates", setter=self.candidate_selection, getter=self.candidate_selection
-            )
+            Doc.set_extension("kw_candidates", default=None)
 
     def render(self, doc: Doc, jupyter=None, **kw_kwargs):
         """Render HTML for text highlighting of keywords.
