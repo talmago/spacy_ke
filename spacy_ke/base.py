@@ -42,22 +42,11 @@ class Candidate:
 
 @component(
     "keyword_extractor",
-    requires=[
-        "token.pos",
-        "token.dep",
-        "doc.sents"
-    ],
-    assigns=[
-        "doc._.extract_keywords",
-        "doc._.kw_candidates"
-    ],
+    requires=["token.pos", "token.dep", "doc.sents"],
+    assigns=["doc._.extract_keywords", "doc._.kw_candidates"],
 )
 class KeywordExtractor:
-    defaults: Dict[str, Any] = {
-        "candidate_selection": {
-            "ngram": 3
-        }
-    }
+    defaults: Dict[str, Any] = {"candidate_selection": {"ngram": 3}}
 
     def __init__(self, nlp: Language, **overrides):
         self.nlp = nlp
