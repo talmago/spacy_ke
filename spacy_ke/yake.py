@@ -5,8 +5,9 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, Tuple, Any, List
 from spacy.tokens.doc import Doc
+from spacy.language import Language
 
-from spacy_ke.base import KeywordExtractor, Candidate
+from .base import KeywordExtractor, Candidate
 
 
 @dataclass
@@ -75,9 +76,10 @@ class Yake(KeywordExtractor):
     --------------
 
     >>> import spacy
+    >>> import spacy_ke
 
     >>> nlp = spacy.load("en_core_web_sm")
-    >>> nlp.add_pipe(Yake(nlp))
+    >>> yake = nlp.add_pipe("yake_keyword_extractor")
 
     >>> doc = nlp(
         "Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence "
@@ -88,12 +90,11 @@ class Yake(KeywordExtractor):
     >>> doc._.extract_keywords(n=5)
     """
 
-    defaults: Dict[str, Any] = {
-        "window": 2,
-        "ngram": 3,
-        "lemmatize": False,
-        "candidate_selection": {"ngram": 3},
-    }
+    def __init__(self, nlp, name, window=2, ngram=3, lemmatize=False):
+        super().__init__(nlp, name)
+        self.window = window
+        self.ngram = ngram
+        self.lemmatize = False
 
     def candidate_weighting(self, doc: Doc) -> List[Tuple[Candidate, Any]]:
         """Compute the weighted score of each keyword candidate.
@@ -107,17 +108,17 @@ class Yake(KeywordExtractor):
         res = []
         vocab = self._build_vocab_features(doc)
         for candidate in doc._.kw_candidates:
-            if self.cfg["lemmatize"]:
+            if self.lemmatize:
                 n_offsets = len(candidate.offsets)
                 weights = [vocab[w].weight for w in candidate.lexical_form]
                 candidate_w = np.prod(weights) / (n_offsets * (1 + sum(weights)))
                 res.append((candidate, candidate_w))
             else:
                 lowercase_forms = [
-                    " ".join(t.lower_ for t in sf) for sf in candidate.surface_forms
+                    " ".join(t.text.lower() for t in sf) for sf in candidate.surface_forms
                 ]
-                for i, sf in enumerate(candidate.surface_forms):
-                    tf = lowercase_forms.count(sf.lower_)
+                for sf in candidate.surface_forms:
+                    tf = lowercase_forms.count(sf.text.lower())
                     prod_ = 1.0
                     sum_ = 0.0
                     for j, token in enumerate(sf):
@@ -163,8 +164,8 @@ class Yake(KeywordExtractor):
             dict[word<str> -> features<Features>]
         """
         features = dict()
-        vocab = self._build_vocab(doc, lemmatize=self.cfg["lemmatize"])
-        contexts = self._build_ctx(doc, vocab, window=self.cfg["window"])
+        vocab = self._build_vocab(doc, lemmatize=self.lemmatize)
+        contexts = self._build_ctx(doc, vocab, window=self.window)
         n_sentences = len(list(doc.sents))
         stop_words = self.nlp.Defaults.stop_words
         freqs = [len(vocab[w]) for w in vocab]
