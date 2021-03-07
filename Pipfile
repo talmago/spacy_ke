@@ -9,15 +9,20 @@ black = "==19.3b0"
 ipython = "*"
 twine = "*"
 pytest = "*"
-en = {file = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz"}
 jupyter = "*"
+
+[dev-packages.en-core-web-sm]
+file = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.0.0/en_core_web_sm-3.0.0.tar.gz"
 
 [packages]
 editdistance = "*"
 networkx = "*"
 numpy = "*"
 scipy = "*"
-spacy = "<2.3.0"
+spacy = "~=3.0"
 
 [requires]
 python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true

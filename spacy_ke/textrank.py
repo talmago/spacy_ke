@@ -1,10 +1,12 @@
+from typing import Any, Dict, Iterable, List, Tuple
+
 import networkx as nx
 import numpy as np
-
-from typing import Dict, Tuple, Any, List
+from spacy.language import Language
 from spacy.tokens.doc import Doc
 
-from spacy_ke.base import KeywordExtractor, Candidate
+from spacy_ke.base import Candidate, KeywordExtractor
+from spacy_ke.candidates import KWCandidates
 
 
 class TextRank(KeywordExtractor):
@@ -27,13 +29,21 @@ class TextRank(KeywordExtractor):
     >>> doc._.extract_keywords(n=5)
     """
 
-    defaults: Dict[str, Any] = {
-        "pos": frozenset({"ADJ", "NOUN", "PROPN", "VERB"}),
-        "window": 3,
-        "alpha": 0.85,
-        "tol": 1.0e-6,
-        "candidate_selection": "chunk",
-    }
+    def __init__(
+        self,
+        nlp: Language,
+        name: str,
+        candidate_selector: KWCandidates = KWCandidates.NOUN_CHUNKS,
+        permitted_pos: Iterable[str] = frozenset({"ADJ", "NOUN", "PROPN", "VERB"}),
+        window=3,
+        alpha=0.85,
+        tol=1.0e-6,
+    ):
+        super().__init__(nlp, name, candidate_selector)
+        self.pos = permitted_pos
+        self.window = window
+        self.alpha = alpha
+        self.tol = tol
 
     def candidate_weighting(self, doc: Doc) -> List[Tuple[Candidate, float]]:
         """Compute the weighted score of each keyword candidate.
@@ -46,7 +56,7 @@ class TextRank(KeywordExtractor):
         """
         res = []
         G = self.build_graph(doc)
-        W = nx.pagerank_scipy(G, alpha=self.cfg["alpha"], tol=self.cfg["tol"])
+        W = nx.pagerank_scipy(G, alpha=self.alpha, tol=self.tol)
         for candidate in doc._.kw_candidates:
             chunk_len = len(candidate.lexical_form)
             non_lemma = 0
@@ -73,8 +83,8 @@ class TextRank(KeywordExtractor):
             nx.Graph
         """
         G = nx.Graph()
-        pos = self.cfg["pos"]
-        window_size = self.cfg["window"]
+        pos = self.pos
+        window_size = self.window
         seen = set()
         for sent in doc.sents:
             for token in sent:

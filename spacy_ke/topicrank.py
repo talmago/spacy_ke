@@ -1,14 +1,15 @@
 import itertools
+from typing import Any, Dict, Iterable, List, Tuple
+
 import networkx as nx
 import numpy as np
-
-from typing import Dict, Tuple, Any, List, Iterable
-
-from scipy.cluster.hierarchy import linkage, fcluster
+from scipy.cluster.hierarchy import fcluster, linkage
 from scipy.spatial.distance import pdist
+from spacy.language import Language
 from spacy.tokens.doc import Doc
 
-from spacy_ke.base import KeywordExtractor, Candidate
+from spacy_ke.base import Candidate, KeywordExtractor
+from spacy_ke.candidates import KWCandidates
 
 
 class TopicRank(KeywordExtractor):
@@ -31,15 +32,27 @@ class TopicRank(KeywordExtractor):
     >>> doc._.extract_keywords(n=5)
     """
 
-    defaults: Dict[str, Any] = {
-        "clustering_method": "average",
-        "distance_metric": "jaccard",
-        "threshold": 0.74,
-        "alpha": 0.85,
-        "tol": 1.0e-6,
-        "heuristic": None,
-        "candidate_selection": "chunk",
-    }
+    defaults: Dict[str, Any] = {}
+
+    def __init__(
+        self,
+        nlp: Language,
+        name: str,
+        candidate_selector: KWCandidates = KWCandidates.NOUN_CHUNKS,
+        clustering_method="average",
+        distance_metric="jaccard",
+        threshold=0.74,
+        alpha=0.85,
+        tol=1.0e-6,
+        heuristic=None,
+    ):
+        super().__init__(nlp, name, candidate_selector)
+        self.clustering_method = clustering_method
+        self.distance_metric = distance_metric
+        self.threshold = threshold
+        self.alpha = alpha
+        self.tol = tol
+        self.heuristic = heuristic
 
     def candidate_selection(self, doc: Doc) -> Iterable[Candidate]:
         """Get keywords candidates.
@@ -66,11 +79,11 @@ class TopicRank(KeywordExtractor):
         res = []
         C = doc._.kw_candidates
         G = self.build_graph(doc)
-        W = nx.pagerank_scipy(G, alpha=self.cfg["alpha"], tol=self.cfg["tol"], weight="weight")
+        W = nx.pagerank_scipy(G, alpha=self.alpha, tol=self.tol, weight="weight")
 
         for i, topic in nx.get_node_attributes(G, "C").items():
             offsets = [C[t].offsets[0] for t in topic]
-            if self.cfg["heuristic"] == "frequent":
+            if self.heuristic == "frequent":
                 freq = [len(C[t].surface_forms) for t in topic]
                 indexes = [j for j, f in enumerate(freq) if f == max(freq)]
                 indexes_offsets = [offsets[j] for j in indexes]
@@ -96,9 +109,9 @@ class TopicRank(KeywordExtractor):
         C = doc._.kw_candidates
         T = self.topic_clustering(
             doc,
-            clustering_method=self.cfg["clustering_method"],
-            distance_metric=self.cfg["distance_metric"],
-            threshold=self.cfg["threshold"],
+            clustering_method=self.clustering_method,
+            distance_metric=self.distance_metric,
+            threshold=self.threshold,
         )
         n_topics = len(T)
         for i, j in itertools.combinations(range(n_topics), 2):

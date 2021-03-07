@@ -1,9 +1,11 @@
-import networkx as nx
+from functools import total_ordering
+from typing import Any, Dict, Iterable, List, Tuple
 
-from typing import Dict, Tuple, Any, List
+import networkx as nx
+from spacy.language import Language
 from spacy.tokens.doc import Doc
 
-from spacy_ke.base import KeywordExtractor, Candidate
+from spacy_ke.base import Candidate, KeywordExtractor, KWCandidates
 
 
 class PositionRank(KeywordExtractor):
@@ -26,14 +28,26 @@ class PositionRank(KeywordExtractor):
     >>> doc._.extract_keywords(n=5)
     """
 
-    defaults: Dict[str, Any] = {
-        "pos": frozenset({"ADJ", "NOUN", "PROPN"}),
-        "window": 10,
-        "alpha": 0.85,
-        "tol": 1.0e-5,
-        "normalize": False,
-        "candidate_selection": "chunk",
-    }
+    def __init__(
+        self,
+        nlp: Language,
+        name: str,
+        candidate_selector: KWCandidates = KWCandidates.noun_chunks,
+        permitted_pos: Iterable[str] = frozenset({"ADJ", "NOUN", "PROPN"}),
+        window=10,
+        alpha=0.85,
+        tol=1.0e-5,
+        normalize=False,
+    ):
+        super().__init__(nlp, name, candidate_selector)
+        self.nlp = nlp
+        self.component_name = name
+        self.candidate_selector = candidate_selector
+        self.pos = permitted_pos
+        self.window = alpha
+        self.alpha = alpha
+        self.tol = tol
+        self.normalize = normalize
 
     def candidate_weighting(self, doc: Doc) -> List[Tuple[Candidate, float]]:
         """Compute the weighted score of each keyword candidate.
@@ -57,16 +71,12 @@ class PositionRank(KeywordExtractor):
 
         # compute the word scores using biased random walk
         W = nx.pagerank_scipy(
-            G,
-            alpha=self.cfg["alpha"],
-            tol=self.cfg["tol"],
-            personalization=positions,
-            weight="weight",
+            G, alpha=self.alpha, tol=self.tol, personalization=positions, weight="weight"
         )
 
         for candidate in doc._.kw_candidates:
             candidate_w = sum([W.get(t, 0.0) for t in candidate.lexical_form])
-            if self.cfg["normalize"]:
+            if self.normalize:
                 candidate_w /= len(candidate.lexical_form)
             res.append((candidate, candidate_w))
 
@@ -84,8 +94,8 @@ class PositionRank(KeywordExtractor):
             nx.Graph
         """
         G = nx.Graph()
-        pos = self.cfg["pos"]
-        window_size = self.cfg["window"]
+        pos = self.pos
+        window_size = self.window
         n_tokens = len(doc)
 
         for token in doc:

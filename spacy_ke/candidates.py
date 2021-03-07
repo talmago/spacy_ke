@@ -1,12 +1,19 @@
 from abc import ABC
-from dataclasses import dataclass
 from collections import deque
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Iterable, Iterator, List, Set, Tuple
+
+import editdistance
 from spacy.language import Language
 from spacy.tokens.doc import Doc
 from spacy.tokens.span import Span
 from spacy.util import filter_spans
-from typing import Any, Iterable, Iterator, Tuple, List, Set
-import editdistance
+
+
+class KWCandidates(Enum):
+    NGRAM = "ngram_kw_candidates"
+    NOUN_CHUNKS = "noun_chunk_kw_candidates"
 
 
 @dataclass
@@ -43,21 +50,28 @@ class KeywordCandidates(ABC):
         self.nlp = nlp
         self.component_name = name
 
-    def __call__(self, doc: Doc) -> Doc:
-        if not hasattr(doc._, "kw_candidates"):
-            Doc.set_extension("kw_candidates", getter=self.extract_candidates)
-        doc._.kw_candidates = self.extract_candidates(doc)
-        return doc
-
-    def __init_subclass__(SelectorImpl):
-        selector_name = SelectorImpl.__name__
+    @classmethod
+    def make_component_name(Self):
+        selector_name = Self.__name__
         selector_name = selector_name[: -len("KeywordCandidates")]
         selector_name = "".join(c if c.islower() else "_" + c.lower() for c in selector_name)
         if selector_name.startswith("_"):
             selector_name = selector_name[1:]
         component_name = f"{selector_name}_kw_candidates"
+        return component_name
+
+    def init_component(self):
+        if not hasattr(Doc._, "kw_candidates"):
+            Doc.set_extension("kw_candidates", getter=self.extract_candidates)
+
+    def __call__(self, doc: Doc) -> Doc:
+        self.init_component()
+        doc._.kw_candidates = self.extract_candidates(doc)
+        return doc
+
+    def __init_subclass__(SelectorImpl):
         Language.factory(
-            name=component_name,
+            name=SelectorImpl.make_component_name(),
             requires=["token.pos", "token.dep"],
             assigns=["doc._.kw_candidates"],
             func=SelectorImpl,
@@ -112,7 +126,7 @@ class NounChunkKeywordCandidates(KeywordCandidates):
                 if span.start >= token_indices[0] and span.end <= token_indices[1]:
                     surface_forms.append((i, span))
                     break
-        return surface_forms
+        return self.merge_surface_forms(surface_forms)
 
 
 class NgramKeywordCandidates(KeywordCandidates):

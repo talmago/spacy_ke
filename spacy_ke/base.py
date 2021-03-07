@@ -3,6 +3,7 @@ import editdistance
 from dataclasses import dataclass
 from typing import Dict, Iterator, Tuple, Any, List, Iterable, Set
 from abc import ABC
+from enum import Enum
 
 from inspect import signature, Parameter
 from functools import wraps
@@ -12,18 +13,26 @@ from spacy.language import Language
 from spacy.tokens.doc import Doc
 from spacy.tokens.span import Span
 
-from .candidates import Candidate
+from .candidates import Candidate, KeywordCandidates, KWCandidates
 
 
 class KeywordExtractor(ABC):
-    def __init__(self, nlp: Language, name: str):
+    def __init__(
+        self, nlp: Language, name: str, candidate_selector: KWCandidates = KWCandidates.ngram
+    ):
         self.nlp = nlp
         self.component_name = name
+        self.candidate_selector = candidate_selector
 
     def __call__(self, doc: Doc) -> Doc:
         self.init_component()
-        print(doc)
         return doc
+
+    @classmethod
+    def make_component_name(Self):
+        extractor_kind = Self.__name__.lower()
+        component_name = f"{extractor_kind}_keyword_extractor"
+        return component_name
 
     def __init_subclass__(ExtractorImplementation):
         """
@@ -31,11 +40,8 @@ class KeywordExtractor(ABC):
         component with a name corresponding to class-name of the extractor,
         e.g., positionrank_keyword_extractor for a subclass named PositionRank.
         """
-        extractor_kind = ExtractorImplementation.__name__.lower()
-        component_name = f"{extractor_kind}_keyword_extractor"
-
         Language.factory(
-            component_name,
+            ExtractorImplementation.make_component_name(),
             requires=["token.pos", "token.dep", "doc.sents", "doc._.kw_candidates"],
             func=ExtractorImplementation,
         )
@@ -43,6 +49,9 @@ class KeywordExtractor(ABC):
     def init_component(self):
         if not Doc.has_extension("extract_keywords"):
             Doc.set_extension("extract_keywords", method=self.extract_keywords)
+        if not Doc.has_extension("kw_candidates"):
+            selector = self.nlp.add_pipe(self.candidate_selector.value, before=self.component_name)
+            selector.init_component()
 
     def render(self, doc: Doc, jupyter=None, **kw_kwargs):
         """Render HTML for text highlighting of keywords.
