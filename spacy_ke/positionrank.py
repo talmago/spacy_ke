@@ -32,7 +32,7 @@ class PositionRank(KeywordExtractor):
         self,
         nlp: Language,
         name: str,
-        candidate_selector: KWCandidates = KWCandidates.noun_chunks,
+        candidate_selector: KWCandidates = KWCandidates.NOUN_CHUNKS,
         permitted_pos: Iterable[str] = frozenset({"ADJ", "NOUN", "PROPN"}),
         window=10,
         alpha=0.85,

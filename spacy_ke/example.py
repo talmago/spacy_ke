@@ -1,11 +1,21 @@
-import spacy
-import spacy_ke
 import pdb
+
+import spacy
+
+from spacy_ke import KWCandidates
 
 try:
     nlp = spacy.load("en_core_web_sm")
-    nlp.add_pipe("ngram_kw_candidates")
-    yake = nlp.add_pipe("yake_keyword_extractor")
+    # add with a keyword candidate filter specified as configuration for the
+    # extractor. NOTE: this does not mutate the language pipeline until it is
+    # called for the first time, it's only implemented for backward
+    # compatibility, and you probably shouldn't do it
+    yake = nlp.add_pipe(
+        "yake_keyword_extractor", config={"candidate_selector": KWCandidates.NOUN_CHUNKS.value}
+    )
+    # ...instead of explicitly specifying "config", in new code, you can just
+    # as easily (and more succinctly)...
+    nlp.add_pipe(KWCandidates.NGRAM.value, before="yake_keyword_extractor")
     doc = nlp(
         """
         Natural language processing (NLP) is a subfield of linguistics,

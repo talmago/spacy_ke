@@ -95,7 +95,7 @@ class Yake(KeywordExtractor):
         self,
         nlp: Language,
         name: str,
-        candidate_selector: KWCandidates = KWCandidates.ngram,
+        candidate_selector: KWCandidates = KWCandidates.NGRAM,
         window=2,
         lemmatize=False,
     ):

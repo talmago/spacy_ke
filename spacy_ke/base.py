@@ -1,13 +1,11 @@
-import editdistance
-
-from dataclasses import dataclass
-from typing import Dict, Iterator, Tuple, Any, List, Iterable, Set
 from abc import ABC
+from dataclasses import dataclass
 from enum import Enum
-
-from inspect import signature, Parameter
 from functools import wraps
+from inspect import Parameter, signature
+from typing import Any, Dict, Iterable, Iterator, List, Set, Tuple
 
+import editdistance
 from spacy import displacy
 from spacy.language import Language
 from spacy.tokens.doc import Doc
@@ -18,7 +16,7 @@ from .candidates import Candidate, KeywordCandidates, KWCandidates
 
 class KeywordExtractor(ABC):
     def __init__(
-        self, nlp: Language, name: str, candidate_selector: KWCandidates = KWCandidates.ngram
+        self, nlp: Language, name: str, candidate_selector: KWCandidates = KWCandidates.NGRAM
     ):
         self.nlp = nlp
         self.component_name = name
