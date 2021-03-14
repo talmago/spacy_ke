@@ -66,6 +66,12 @@ Run black (code formatter)
 $ pipenv run black spacy_ke/ --config=pyproject.toml
 ```
 
+Release package (via `twine`)
+
+```sh
+$ python setup.py upload
+```
+
 ## References
 
 [1] A Review of Keyphrase Extraction
