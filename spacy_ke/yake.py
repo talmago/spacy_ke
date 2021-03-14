@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from typing import Dict, Tuple, Any, List
 from spacy.tokens.doc import Doc
 
-from spacy_ke.base import KeywordExtractor, Candidate
+from spacy_ke.base import KeywordExtractor
+from spacy_ke.util import Candidate
 
 
 @dataclass
@@ -92,7 +93,7 @@ class Yake(KeywordExtractor):
         "window": 2,
         "ngram": 3,
         "lemmatize": False,
-        "candidate_selection": {"ngram": 3},
+        "candidate_selection": "ngram",
     }
 
     def candidate_weighting(self, doc: Doc) -> List[Tuple[Candidate, Any]]:
@@ -280,3 +281,19 @@ class Yake(KeywordExtractor):
                 # add word to the current block
                 block.append(word)
         return contexts
+
+
+if __name__ == "__main__":
+    import spacy
+
+    nlp = spacy.load("en_core_web_sm")
+    nlp.add_pipe(Yake(nlp))
+
+    doc = nlp(
+        "Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence "
+        "concerned with the interactions between computers and human language, in particular how to program computers "
+        "to process and analyze large amounts of natural language data. "
+    )
+
+    for keyword, score in doc._.extract_keywords(n=3):
+        print(keyword, "-", score)

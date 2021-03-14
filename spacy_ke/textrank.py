@@ -4,7 +4,8 @@ import numpy as np
 from typing import Dict, Tuple, Any, List
 from spacy.tokens.doc import Doc
 
-from spacy_ke.base import KeywordExtractor, Candidate
+from spacy_ke.base import KeywordExtractor
+from spacy_ke.util import Candidate
 
 
 class TextRank(KeywordExtractor):

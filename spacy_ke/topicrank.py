@@ -8,7 +8,8 @@ from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import pdist
 from spacy.tokens.doc import Doc
 
-from spacy_ke.base import KeywordExtractor, Candidate
+from spacy_ke.base import KeywordExtractor
+from spacy_ke.util import Candidate
 
 
 class TopicRank(KeywordExtractor):
