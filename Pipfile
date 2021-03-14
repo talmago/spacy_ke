@@ -4,13 +4,14 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-autopep8 = "*"
 black = "==19.3b0"
 ipython = "*"
 twine = "*"
 pytest = "*"
-en = {file = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz"}
 jupyter = "*"
+
+[dev-packages.en-core-web-sm]
+file = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz"
 
 [packages]
 editdistance = "*"
