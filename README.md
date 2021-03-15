@@ -32,18 +32,22 @@ for keyword, score in doc._.extract_keywords(n=3):
 # Natural language processing - 0.04407186487965091
 ```
 
-#### Customization
-
-In the example below, we customize the yake algorithm as follows; 
-  - Change the candidate selection to **chunk** (noun phrases). Notice that *candidate_selection* is a global 
-  config property for all keyword extractors, which can be set to either a **callable** (*Doc -> Iterator[Candidate]*), 
-  a **string** pointing to instance method (i.e *chunk* -> *._chunk_selection()*), or a **dict** (i.e *{"ngram": 3}*).
-  - Set ``lemmatize=True`` for candidate weighting. 
-  Notice that this config property is unique to the Yake implementation.
+### Configure a `Yake` component
 
 ```python
 
-nlp.add_pipe(Yake(nlp, candidate_selection="chunk", lemmatize=True))
+# exclusive to Yank implementation ..
+window: int = 2
+
+# same here ..
+lemmatize: bool = False
+
+# https://github.com/talmago/spacy_ke/blob/master/spacy_ke/util.py
+candidate_selection: Union[str, Callable] = "ngram"
+
+# ready to go
+yake = Yake(nlp, window=window, lemmatize=lemmatize, candidate_selection=candidate_selection)
+nlp.add_pipe(yake)
 ```
 
 ## Development

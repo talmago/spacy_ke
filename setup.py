@@ -88,5 +88,5 @@ setup(
     cmdclass={
         "upload": UploadCommand,
     },
-    entry_points={"spacy_factories": ["spacy_yake = spacy_yake:Yake"]},
+    entry_points={}
 )

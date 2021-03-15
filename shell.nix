@@ -11,5 +11,10 @@ in mkShell {
     python37Packages.black
     python37Packages.ipython
     python37Packages.pytest
+
+    pipenv
+    which
+    gcc
+    binutils
   ];
 }

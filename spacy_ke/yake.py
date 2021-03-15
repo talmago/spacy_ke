@@ -91,7 +91,6 @@ class Yake(KeywordExtractor):
 
     defaults: Dict[str, Any] = {
         "window": 2,
-        "ngram": 3,
         "lemmatize": False,
         "candidate_selection": "ngram",
     }
@@ -128,14 +127,14 @@ class Yake(KeywordExtractor):
                             if j - 1 >= 0:
                                 left = sf[j - 1]
                                 prob_t1 = (
-                                        vocab[left.lower_].ctx[1].count(term_stop)
-                                        / vocab[left.lower_].tf
+                                    vocab[left.lower_].ctx[1].count(term_stop)
+                                    / vocab[left.lower_].tf
                                 )
                             if j + 1 < len(sf):
                                 right = sf[j + 1]
                                 prob_t2 = (
-                                        vocab[term_stop].ctx[0].count(right.text)
-                                        / vocab[right.lower_].tf
+                                    vocab[term_stop].ctx[0].count(right.text)
+                                    / vocab[right.lower_].tf
                                 )
                             prob = prob_t1 * prob_t2
                             prod_ *= 1 + (1 - prob)
@@ -273,10 +272,10 @@ class Yake(KeywordExtractor):
                     continue
                 # add the left context
                 contexts[word][0].extend(
-                    [w for w in block[max(0, len(block) - window): len(block)]]
+                    [w for w in block[max(0, len(block) - window) : len(block)]]
                 )
                 # add the right context
-                for w in block[max(0, len(block) - window): len(block)]:
+                for w in block[max(0, len(block) - window) : len(block)]:
                     contexts[w][1].append(word)
                 # add word to the current block
                 block.append(word)
