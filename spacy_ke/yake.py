@@ -89,11 +89,7 @@ class Yake(KeywordExtractor):
     >>> doc._.extract_keywords(n=5)
     """
 
-    defaults: Dict[str, Any] = {
-        "window": 2,
-        "lemmatize": False,
-        "candidate_selection": "ngram",
-    }
+    defaults: Dict[str, Any] = {"window": 2, "lemmatize": False, "candidate_selection": "ngram"}
 
     def candidate_weighting(self, doc: Doc) -> List[Tuple[Candidate, Any]]:
         """Compute the weighted score of each keyword candidate.

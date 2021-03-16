@@ -32,22 +32,41 @@ for keyword, score in doc._.extract_keywords(n=3):
 # Natural language processing - 0.04407186487965091
 ```
 
-### Configure a `Yake` component
+### Configure the pipeline component
+
+Normally you'd want to configure the keyword extraction pipeline according to its implementation. 
 
 ```python
+window: int = 2 # default
+lemmatize: bool = False  # default
+candidate_selection: str = "ngram" # default, use "chunk" for noun phrase selection.
 
-# exclusive to Yank implementation ..
-window: int = 2
+nlp.add_pipe(
+    Yake(
+        nlp, 
+        window=window, # default
+        lemmatize=lemmatize, # default
+        candidate_selection="ngram" # default, use "chunk" for noun phrase selection
+    )
+)
+```
 
-# same here ..
-lemmatize: bool = False
+And if you want to define a custom candidate selection use the example below.
 
-# https://github.com/talmago/spacy_ke/blob/master/spacy_ke/util.py
-candidate_selection: Union[str, Callable] = "ngram"
+```python
+from spacy_ke.util import registry, Candidate
 
-# ready to go
-yake = Yake(nlp, window=window, lemmatize=lemmatize, candidate_selection=candidate_selection)
-nlp.add_pipe(yake)
+@registry.candidate_selection.register("custom")
+def custom_selection(doc: Doc, n=3) -> Iterable[Candidate]:
+  ...
+
+nlp.add_pipe(
+    Yake(
+        nlp, 
+        candidate_selection="custom"
+    )
+)
+
 ```
 
 ## Development

@@ -120,25 +120,26 @@ def ngram_selection(doc: Doc, n=3) -> Iterable[Candidate]:
             return False
         return True
 
-    def _ngrams(doc: Doc, n=3) -> Iterator[Tuple[int, Span]]:
-        """Select all the n-grams and populate the candidate container.
-
-        Args:
-            doc (Doc): doc.
-            n (int): the n-gram length, defaults to 3.
-
-        Returns:
-            Iterator(sentence_id<int>, offset<int>, ngram<Span>)
-        """
-        for sentence_id, sentence in enumerate(doc.sents):
-            n_tokens = len(sentence)
-            window = min(n, n_tokens)
-            for j in range(n_tokens):
-                for k in range(j + 1, min(j + 1 + window, n_tokens + 1)):
-                    yield sentence_id, sentence[j:k]
-
     surface_forms = [sf for sf in _ngrams(doc, n=n) if _is_candidate(sf[1])]
     return _merge_surface_forms(surface_forms)
+
+
+def _ngrams(doc: Doc, n=3) -> Iterator[Tuple[int, Span]]:
+    """Select all the n-grams and populate the candidate container.
+
+    Args:
+        doc (Doc): doc.
+        n (int): the n-gram length, defaults to 3.
+
+    Returns:
+        Iterator(sentence_id<int>, offset<int>, ngram<Span>)
+    """
+    for sentence_id, sentence in enumerate(doc.sents):
+        n_tokens = len(sentence)
+        window = min(n, n_tokens)
+        for j in range(n_tokens):
+            for k in range(j + 1, min(j + 1 + window, n_tokens + 1)):
+                yield sentence_id, sentence[j:k]
 
 
 def _merge_surface_forms(surface_forms: Iterator[Tuple[int, Span]]) -> Iterable[Candidate]:
@@ -161,18 +162,3 @@ def _merge_surface_forms(surface_forms: Iterator[Tuple[int, Span]]) -> Iterable[
         c.surface_forms.append(span)
         c.sentence_ids.append(sent_i)
     return list(candidates.values())
-
-
-if __name__ == "__main__":
-    import spacy
-
-    nlp = spacy.load("en_core_web_sm")
-
-    doc = nlp(
-        "Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence "
-        "concerned with the interactions between computers and human language, in particular how to program computers "
-        "to process and analyze large amounts of natural language data. "
-    )
-
-    candidates = ngram_selection(doc, n=3)
-    print(candidates)
