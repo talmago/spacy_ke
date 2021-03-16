@@ -9,10 +9,6 @@ from spacy.tokens.span import Span
 from spacy.util import filter_spans
 
 
-class registry(object):
-    candidate_selection = catalogue.create("spacy_ke", "candidate_selection")
-
-
 @dataclass
 class Candidate:
     lexical_form: List[str]
@@ -40,6 +36,10 @@ class Candidate:
         dist = editdistance.eval(lf1, lf2)
         dist /= max(len(lf1), len(lf2))
         return 1.0 - dist
+
+
+class registry(object):
+    candidate_selection = catalogue.create("spacy_ke", "candidate_selection")
 
 
 @registry.candidate_selection.register("chunk")

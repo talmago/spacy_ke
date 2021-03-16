@@ -2,17 +2,11 @@ from typing import Dict, Tuple, Any, List, Iterable
 
 from spacy import displacy
 from spacy.language import Language
-from spacy.pipeline.pipes import component
 from spacy.tokens.doc import Doc
 
 from spacy_ke.util import Candidate, registry
 
 
-@component(
-    "keyword_extractor",
-    requires=["token.pos", "token.dep", "doc.sents"],
-    assigns=["doc._.extract_keywords", "doc._.kw_candidates"],
-)
 class KeywordExtractor:
     defaults: Dict[str, Any] = {"candidate_selection": "ngram"}
 

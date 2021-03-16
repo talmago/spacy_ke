@@ -8,7 +8,7 @@ pip install spacy_ke
 
 ## 🚀 Quickstart
 
-### Usage as a spaCy pipeline component
+### Usage as a spaCy pipeline component (spaCy v2.x.x)
 
 ```python
 import spacy
@@ -31,6 +31,28 @@ for keyword, score in doc._.extract_keywords(n=3):
 # NLP - 0.035016746977200745
 # Natural language processing - 0.04407186487965091
 ```
+
+### Usage as a spaCy pipeline component (spaCy v3.x.x)
+
+```python
+import spacy
+
+from spacy.language import Language
+from spacy_ke import Yake
+
+
+@Language.factory(
+    "yake", default_config={"window": 2, "lemmatize": False, "candidate_selection": "ngram"}
+)
+def yake(nlp, name, window: int, lemmatize: bool, candidate_selection: str):
+    return Yake(
+        nlp, window=window, lemmatize=lemmatize, candidate_selection=candidate_selection
+    )
+
+nlp = spacy.load("en_core_web_sm")
+nlp.add_pipe("yake")
+```
+
 
 ### Configure the pipeline component
 

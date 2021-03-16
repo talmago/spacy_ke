@@ -110,10 +110,10 @@ class Yake(KeywordExtractor):
                 res.append((candidate, candidate_w))
             else:
                 lowercase_forms = [
-                    " ".join(t.lower_ for t in sf) for sf in candidate.surface_forms
+                    " ".join(t.text.lower() for t in sf) for sf in candidate.surface_forms
                 ]
                 for i, sf in enumerate(candidate.surface_forms):
-                    tf = lowercase_forms.count(sf.lower_)
+                    tf = lowercase_forms.count(sf.text.lower())
                     prod_ = 1.0
                     sum_ = 0.0
                     for j, token in enumerate(sf):
