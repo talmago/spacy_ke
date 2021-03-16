@@ -1,0 +1,41 @@
+# https://docs.github.com/en/actions/guides/building-and-testing-python#prerequisites
+# https://github.com/actions/setup-python/blob/main/.github/workflows/test-python.yml
+
+name: Python package
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ 3.7 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pipenv
+          pipenv sync -d
+          pipenv run python -m spacy download en_core_web_sm
+      - name: Run black
+        run: |
+          pipenv run black --check spacy_ke/ --config=pyproject.toml
+      - name: Run pytest
+        run: |
+          pipenv run pytest
+        env:
+          PYTHONPATH: "."
