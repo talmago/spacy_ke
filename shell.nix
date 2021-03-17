@@ -17,4 +17,15 @@ in mkShell {
     gcc
     binutils
   ];
+
+  shellHook = ''
+     # set $PYTHONPATH
+     export PYTHONPATH=$PYTHONPATH:$(pwd);
+
+     # install python dependencies
+     pipenv sync -d;
+
+     # install spaCy model
+     pipenv run python -m spacy download en_core_web_sm
+  '';
 }
