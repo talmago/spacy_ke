@@ -9,6 +9,7 @@ ipython = "*"
 twine = "*"
 pytest = "*"
 jupyter = "*"
+bumpversion = "*"
 
 [packages]
 editdistance = "*"
