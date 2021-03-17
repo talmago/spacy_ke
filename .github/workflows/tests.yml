@@ -1,7 +1,4 @@
-# https://docs.github.com/en/actions/guides/building-and-testing-python#prerequisites
-# https://github.com/actions/setup-python/blob/main/.github/workflows/test-python.yml
-
-name: Python package
+name: ci/test
 
 on:
   push:
