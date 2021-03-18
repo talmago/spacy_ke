@@ -4,19 +4,16 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-black = "==19.3b0"
+black = "*"
 ipython = "*"
 twine = "*"
 pytest = "*"
-jupyter = "*"
 bumpversion = "*"
 
 [packages]
+dataclasses = {version = ">=0.6,<1.0", python_version = "< '3.7'"}
 editdistance = "*"
 networkx = "*"
-numpy = "*"
-scipy = "*"
-spacy = "*"
-
-[requires]
-python_version = "3.7"
+scipy = ">=1.5"
+numpy = ">=1.15.0"
+spacy = ">=3.0.0,<4.0.0"

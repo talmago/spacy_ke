@@ -3,7 +3,7 @@
 # inspired from:
 # https://github.com/kennethreitz/setup.py/blob/master/setup.py
 # Note: To use the 'upload' functionality of this file, you must:
-#   $ pipenv install twine --dev
+#   $ pipenv install twine setuptools --dev
 
 import io
 import os
@@ -65,21 +65,20 @@ setup(
     author_email=about["__email__"],
     url=about["__url__"],
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
-    install_requires=["editdistance", "numpy", "networkx", "spacy<2.3.0", "scipy"],
-    python_requires=">=3.7",
+    install_requires=["numpy>=1.15.0", "scipy>=1.5", "networkx", "editdistance"],
+    python_requires=">=3.6",
     include_package_data=True,
     license=about["__license__"],
     classifiers=[
-        # Trove classifiers
-        # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Scientific/Engineering",
     ],
-    # $ setup.py publish support.
     cmdclass={
         "upload": UploadCommand,
     },

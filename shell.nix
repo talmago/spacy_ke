@@ -2,16 +2,16 @@ with import <nixpkgs> {};
 
 let
   pythonEnv = python37;
+  pythonPackages = python37Packages;
 
 in mkShell {
   buildInputs = [
-    python37
-    python37Packages.pip-tools
-    python37Packages.setuptools
-    python37Packages.black
-    python37Packages.ipython
-    python37Packages.pytest
-
+    pythonEnv
+    pythonPackages.pip-tools
+    pythonPackages.setuptools
+    pythonPackages.black
+    pythonPackages.ipython
+    pythonPackages.pytest
     pipenv
     which
     gcc
