@@ -9,23 +9,25 @@ in mkShell {
     pythonEnv
     pythonPackages.pip-tools
     pythonPackages.setuptools
-    pythonPackages.black
-    pythonPackages.ipython
-    pythonPackages.pytest
-    pipenv
     which
     gcc
     binutils
   ];
 
   shellHook = ''
-     # set $PYTHONPATH
-     export PYTHONPATH=$PYTHONPATH:$(pwd);
+     # create virtual env
+     python -m venv .venv
+
+     # activate virtualenv
+     source .venv/bin/activate
 
      # install python dependencies
-     pipenv sync -d;
+     pip install -U pip && pip install -r requirements-dev.txt
 
      # install spaCy model
-     pipenv run python -m spacy download en_core_web_sm
+     python -m spacy download en_core_web_sm
+
+     # set $PYTHONPATH
+     export PYTHONPATH=$PYTHONPATH:$(pwd);
   '';
 }

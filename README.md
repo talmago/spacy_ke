@@ -93,22 +93,30 @@ nlp.add_pipe(
 
 ## Development
 
-Set up pip & virtualenv
+Set up virtualenv
 
 ```sh
-$ pipenv sync -d
+$ python -m venv .venv
+$ source .venv/bin/activate
+```
+
+Install dependencies
+
+```sh
+$ pip install -U pip
+$ pip install -r requirements-dev.txt
 ```
 
 Run unit test
 
 ```sh
-$ pipenv run pytest
+$ pytest
 ```
 
 Run black (code formatter)
 
 ```sh
-$ pipenv run black spacy_ke/ --config=pyproject.toml
+$ black spacy_ke/ --config=pyproject.toml
 ```
 
 Release package (via `twine`)

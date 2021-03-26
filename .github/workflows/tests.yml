@@ -25,15 +25,16 @@ jobs:
       - name: Install dependencies (spacy 3.0)
         run: |
           python -m pip install --upgrade pip
-          pip install pipenv
-          pipenv sync -d
-          pipenv run python -m spacy download en_core_web_sm
+          pip install -r requirements.txt
+          python -m spacy download en_core_web_sm
       - name: Run black
         run: |
-          pipenv run black --check spacy_ke/ --config=pyproject.toml
+          python -m pip install black
+          black --check spacy_ke/ --config=pyproject.toml
       - name: Run pytest
         run: |
-          pipenv run pytest
+          pip install pytest
+          pytest
         env:
           PYTHONPATH: "."
 #      - name: Install dependencies (spacy 2.2.4)

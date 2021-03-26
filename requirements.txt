@@ -1,0 +1,6 @@
+dataclasses>=0.6,<1.0; python_version < "3.7"
+editdistance
+networkx
+scipy>=1.5
+numpy>=1.15.0
+spacy>=3.0.0,<4.0.0
