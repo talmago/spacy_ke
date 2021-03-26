@@ -5,7 +5,11 @@ from spacy_ke import Yake
 
 
 @Language.factory(
-    "yake", default_config={"window": 2, "lemmatize": False, "candidate_selection": "ngram"}
+    "yake", default_config={
+        "window": 2,
+        "lemmatize": False,
+        "candidate_selection": "ngram"
+    }
 )
 def yake(nlp, name, window: int, lemmatize: bool, candidate_selection: str):
     return Yake(
