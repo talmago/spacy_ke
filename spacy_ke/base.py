@@ -108,5 +108,7 @@ class KeywordExtractor:
         Returns:
             Iterable[Candidate]
         """
-        candidate_selection = registry.candidate_selection.get(self.cfg["candidate_selection"])
+        candidate_selection = registry.candidate_selection.get(
+            self.cfg["candidate_selection"]
+        )
         return candidate_selection(doc)
