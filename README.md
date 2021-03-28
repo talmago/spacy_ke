@@ -16,7 +16,8 @@ import spacy
 from spacy_ke import Yake
 
 nlp = spacy.load("en_core_web_sm")
-nlp.add_pipe(Yake(nlp))
+nlp.add_pipe("yake")  # spacy==3.0.x
+# nlp.add_pipe(Yake(nlp))   # spacy==2.x.x
 
 doc = nlp(
     "Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence "
@@ -32,43 +33,21 @@ for keyword, score in doc._.extract_keywords(n=3):
 # Natural language processing - 0.04407186487965091
 ```
 
-### Usage as a spaCy pipeline component (spaCy v3.x.x)
-
-```python
-import spacy
-
-from spacy.language import Language
-from spacy_ke import Yake
-
-
-@Language.factory(
-    "yake", default_config={"window": 2, "lemmatize": False, "candidate_selection": "ngram"}
-)
-def yake(nlp, name, window: int, lemmatize: bool, candidate_selection: str):
-    return Yake(
-        nlp, window=window, lemmatize=lemmatize, candidate_selection=candidate_selection
-    )
-
-nlp = spacy.load("en_core_web_sm")
-nlp.add_pipe("yake")
-```
-
-
 ### Configure the pipeline component
 
-Normally you'd want to configure the keyword extraction pipeline according to its implementation. 
+Normally you'd want to configure the keyword extraction pipeline according to its implementation.
 
 ```python
-window: int = 2 # default
+window: int = 2  # default
 lemmatize: bool = False  # default
-candidate_selection: str = "ngram" # default, use "chunk" for noun phrase selection.
+candidate_selection: str = "ngram"  # default, use "chunk" for noun phrase selection.
 
 nlp.add_pipe(
     Yake(
-        nlp, 
-        window=window, # default
-        lemmatize=lemmatize, # default
-        candidate_selection="ngram" # default, use "chunk" for noun phrase selection
+        nlp,
+        window=window,  # default
+        lemmatize=lemmatize,  # default
+        candidate_selection="ngram"  # default, use "chunk" for noun phrase selection
     )
 )
 ```
@@ -76,15 +55,19 @@ nlp.add_pipe(
 And if you want to define a custom candidate selection use the example below.
 
 ```python
+from typing import Iterable
+from spacy.tokens import Doc
 from spacy_ke.util import registry, Candidate
+
 
 @registry.candidate_selection.register("custom")
 def custom_selection(doc: Doc, n=3) -> Iterable[Candidate]:
-  ...
+    ...
+
 
 nlp.add_pipe(
     Yake(
-        nlp, 
+        nlp,
         candidate_selection="custom"
     )
 )

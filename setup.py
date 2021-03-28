@@ -18,9 +18,12 @@ with io.open(os.path.join(root, "spacy_ke", "about.py"), encoding="utf8") as f:
     about = {}
     exec(f.read(), about)
 
-# Import the README and use it as the long-description.
+# Use the README and use it as the long-description.
 with io.open(os.path.join(root, "README.md"), encoding="utf-8") as f:
     long_description = "\n" + f.read()
+
+with io.open(os.path.join(root, "requirements.txt"), encoding="utf-8") as f:
+    install_requires = [line.strip() for line in f.readlines() if not line.startswith("spacy")]
 
 
 class UploadCommand(Command):
@@ -65,7 +68,7 @@ setup(
     author_email=about["__email__"],
     url=about["__url__"],
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
-    install_requires=["numpy>=1.15.0", "scipy>=1.5", "networkx", "editdistance"],
+    install_requires=install_requires,
     python_requires=">=3.6",
     include_package_data=True,
     license=about["__license__"],
