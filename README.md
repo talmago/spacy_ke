@@ -12,12 +12,14 @@ pip install spacy_ke
 
 ```python
 import spacy
+import spacy_ke
 
-from spacy_ke import Yake
-
+# load spacy model
 nlp = spacy.load("en_core_web_sm")
-nlp.add_pipe("yake")  # spacy==3.0.x
-# nlp.add_pipe(Yake(nlp))   # spacy==2.x.x
+
+# spacy v3.0.x factory.
+# if you're using spacy v2.x.x swich to `nlp.add_pipe(spacy_ke.Yake(nlp))`
+nlp.add_pipe("yake")
 
 doc = nlp(
     "Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence "
@@ -27,10 +29,6 @@ doc = nlp(
 
 for keyword, score in doc._.extract_keywords(n=3):
     print(keyword, "-", score)
-
-# computer science - 0.020279855002262884
-# NLP - 0.035016746977200745
-# Natural language processing - 0.04407186487965091
 ```
 
 ### Configure the pipeline component

@@ -1,9 +1,12 @@
 import spacy
+import spacy_ke
 
-from spacy_ke.yake import Yake
-
+# load spacy model
 nlp = spacy.load("en_core_web_sm")
-nlp.add_pipe(Yake(nlp))
+
+# spacy v3.0.x factory.
+# if you're using spacy v2.x.x swich to `nlp.add_pipe(spacy_ke.Yake(nlp))`
+nlp.add_pipe("yake")
 
 doc = nlp(
     "Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence "
