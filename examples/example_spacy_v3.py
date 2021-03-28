@@ -1,4 +1,5 @@
 import spacy
+
 import spacy_ke
 
 nlp = spacy.load("en_core_web_sm")

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-
-from typing import Iterator, Tuple, List, Iterable, Set
+from typing import Iterable, Iterator, List, Set, Tuple
 
 import catalogue
 import editdistance

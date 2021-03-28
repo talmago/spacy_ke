@@ -1,10 +1,10 @@
 from spacy.language import Language
 
 from spacy_ke.about import *
-from spacy_ke.yake import Yake
-from spacy_ke.textrank import TextRank
 from spacy_ke.positionrank import PositionRank
+from spacy_ke.textrank import TextRank
 from spacy_ke.topicrank import TopicRank
+from spacy_ke.yake import Yake
 
 if hasattr(Language, "factory"):
     from thinc.api import Config
@@ -40,10 +40,9 @@ if hasattr(Language, "factory"):
     """
     )
 
-
     @Language.factory("yake", default_config=defaults["Yake"])
     def make_yake(
-            nlp: Language, name: str, window: int, lemmatize: bool, candidate_selection: str
+        nlp: Language, name: str, window: int, lemmatize: bool, candidate_selection: str
     ):
         return Yake(
             nlp,
@@ -52,15 +51,14 @@ if hasattr(Language, "factory"):
             candidate_selection=candidate_selection,
         )
 
-
     @Language.factory("textrank", default_config=defaults["TextRank"])
     def make_textrank(
-            nlp: Language,
-            name: str,
-            window: int,
-            alpha: float,
-            tol: float,
-            candidate_selection: str,
+        nlp: Language,
+        name: str,
+        window: int,
+        alpha: float,
+        tol: float,
+        candidate_selection: str,
     ):
         return TextRank(
             nlp,
@@ -70,16 +68,15 @@ if hasattr(Language, "factory"):
             candidate_selection=candidate_selection,
         )
 
-
     @Language.factory("positionrank", default_config=defaults["PositionRank"])
     def make_positionrank(
-            nlp: Language,
-            name: str,
-            window: int,
-            alpha: float,
-            tol: float,
-            normalize: bool,
-            candidate_selection: str,
+        nlp: Language,
+        name: str,
+        window: int,
+        alpha: float,
+        tol: float,
+        normalize: bool,
+        candidate_selection: str,
     ):
         return PositionRank(
             nlp,
@@ -90,18 +87,17 @@ if hasattr(Language, "factory"):
             candidate_selection=candidate_selection,
         )
 
-
     @Language.factory("topicrank", default_config=defaults["TopicRank"])
     def make_topicrank(
-            nlp: Language,
-            name: str,
-            clustering_method: str,
-            distance_metric: str,
-            threshold: float,
-            alpha: float,
-            tol: float,
-            heuristic: str,
-            candidate_selection: str,
+        nlp: Language,
+        name: str,
+        clustering_method: str,
+        distance_metric: str,
+        threshold: float,
+        alpha: float,
+        tol: float,
+        heuristic: str,
+        candidate_selection: str,
     ):
         return TopicRank(
             nlp,

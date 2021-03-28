@@ -1,7 +1,7 @@
+from typing import Any, Dict, List, Tuple
+
 import networkx as nx
 import numpy as np
-
-from typing import Dict, Tuple, Any, List
 from spacy.tokens.doc import Doc
 
 from spacy_ke.base import KeywordExtractor

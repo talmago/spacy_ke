@@ -1,6 +1,6 @@
-import networkx as nx
+from typing import Any, Dict, List, Tuple
 
-from typing import Dict, Tuple, Any, List
+import networkx as nx
 from spacy.tokens.doc import Doc
 
 from spacy_ke.base import KeywordExtractor

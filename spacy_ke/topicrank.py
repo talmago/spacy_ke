@@ -1,10 +1,9 @@
 import itertools
+from typing import Any, Dict, Iterable, List, Tuple
+
 import networkx as nx
 import numpy as np
-
-from typing import Dict, Tuple, Any, List, Iterable
-
-from scipy.cluster.hierarchy import linkage, fcluster
+from scipy.cluster.hierarchy import fcluster, linkage
 from scipy.spatial.distance import pdist
 from spacy.tokens.doc import Doc
 

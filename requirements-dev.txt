@@ -2,6 +2,7 @@
 
 black
 ipython
+isort
 twine
 pytest
 bumpversion

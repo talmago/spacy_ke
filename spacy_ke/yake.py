@@ -1,9 +1,9 @@
 import re
-import numpy as np
-
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, Tuple, Any, List
+from typing import Any, Dict, List, Tuple
+
+import numpy as np
 from spacy.tokens.doc import Doc
 
 from spacy_ke.base import KeywordExtractor
