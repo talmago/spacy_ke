@@ -1,7 +1,7 @@
+from typing import Any, Dict, List, Tuple
+
 import networkx as nx
 import numpy as np
-
-from typing import Dict, Tuple, Any, List
 from spacy.tokens.doc import Doc
 
 from spacy_ke.base import KeywordExtractor
@@ -59,7 +59,9 @@ class TextRank(KeywordExtractor):
                     non_lemma += 1
             non_lemma_discount = chunk_len / (chunk_len + (2.0 * non_lemma) + 1.0)
             candidate_w = np.sqrt(rank / (chunk_len + non_lemma)) * non_lemma_discount
-            candidate_w += candidate.offsets[0] * 1e-8  # break ties according to position in text
+            candidate_w += (
+                candidate.offsets[0] * 1e-8
+            )  # break ties according to position in text
             res.append((candidate, candidate_w))
         res.sort(key=lambda x: x[1], reverse=True)
         return res

@@ -5,26 +5,7 @@ def test_example(en_core_web_sm, spacy_v3):
     nlp = en_core_web_sm
 
     if spacy_v3:
-        from spacy.language import Language
-
-        @Language.factory(
-            "yake", default_config={
-                "window": 2,
-                "lemmatize": False,
-                "candidate_selection": "ngram"
-            }
-        )
-        def yake(nlp, name, window: int, lemmatize: bool, candidate_selection: str):
-            return Yake(
-                nlp,
-                window=window,
-                lemmatize=lemmatize,
-                candidate_selection=candidate_selection
-            )
-
         nlp.add_pipe("yake")
-
-
     else:
         nlp.add_pipe(Yake(nlp))
 

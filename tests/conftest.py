@@ -1,6 +1,5 @@
 import pytest
 import spacy
-
 from packaging.version import Version
 
 

@@ -1,10 +1,9 @@
 import itertools
+from typing import Any, Dict, Iterable, List, Tuple
+
 import networkx as nx
 import numpy as np
-
-from typing import Dict, Tuple, Any, List, Iterable
-
-from scipy.cluster.hierarchy import linkage, fcluster
+from scipy.cluster.hierarchy import fcluster, linkage
 from scipy.spatial.distance import pdist
 from spacy.tokens.doc import Doc
 
@@ -67,7 +66,9 @@ class TopicRank(KeywordExtractor):
         res = []
         C = doc._.kw_candidates
         G = self.build_graph(doc)
-        W = nx.pagerank_scipy(G, alpha=self.cfg["alpha"], tol=self.cfg["tol"], weight="weight")
+        W = nx.pagerank_scipy(
+            G, alpha=self.cfg["alpha"], tol=self.cfg["tol"], weight="weight"
+        )
 
         for i, topic in nx.get_node_attributes(G, "C").items():
             offsets = [C[t].offsets[0] for t in topic]
@@ -121,7 +122,11 @@ class TopicRank(KeywordExtractor):
         return G
 
     def topic_clustering(
-        self, doc: Doc, clustering_method="average", distance_metric="jaccard", threshold=0.74
+        self,
+        doc: Doc,
+        clustering_method="average",
+        distance_metric="jaccard",
+        threshold=0.74,
     ) -> List[List[int]]:
         """Get a list of topics by clustering candidates' lexical forms.
 
@@ -145,7 +150,9 @@ class TopicRank(KeywordExtractor):
             Z = linkage(Y, method=clustering_method)
             clusters = fcluster(Z, t=threshold, criterion="distance")
             for cluster_id in range(1, max(clusters) + 1):
-                topics.append([j for j in range(len(clusters)) if clusters[j] == cluster_id])
+                topics.append(
+                    [j for j in range(len(clusters)) if clusters[j] == cluster_id]
+                )
         return topics
 
     @staticmethod

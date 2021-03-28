@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Any, List, Iterable
+from typing import Any, Dict, Iterable, List, Tuple
 
 from spacy import displacy
 from spacy.language import Language
@@ -108,5 +108,7 @@ class KeywordExtractor:
         Returns:
             Iterable[Candidate]
         """
-        candidate_selection = registry.candidate_selection.get(self.cfg["candidate_selection"])
+        candidate_selection = registry.candidate_selection.get(
+            self.cfg["candidate_selection"]
+        )
         return candidate_selection(doc)

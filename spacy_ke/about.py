@@ -1,5 +1,5 @@
 __title__ = "spacy_ke"
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __summary__ = "Keyword extraction with spaCy"
 __author__ = "Tal Almagor"
 __email__ = "almagoric@gmail.com"

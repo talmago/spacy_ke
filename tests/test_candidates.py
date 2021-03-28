@@ -1,4 +1,4 @@
-from spacy_ke.util import ngram_selection, chunk_selection
+from spacy_ke.util import chunk_selection, ngram_selection
 
 
 def test_ngram_range_candidate_selection(en_core_web_sm):
