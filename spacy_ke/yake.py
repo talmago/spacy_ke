@@ -148,7 +148,7 @@ class Yake(KeywordExtractor):
                         # Setting sum_ to -1+eps so 1+sum_ != 0
                         sum_ = -0.99999999999
                     candidate_w = prod_
-                    candidate_w /= tf * (1 + sum_)
+                    candidate_w /= (tf + 1e-12) * (1 + sum_)
                     res.append((candidate, candidate_w))
         res.sort(key=lambda x: x[1])
         return res
